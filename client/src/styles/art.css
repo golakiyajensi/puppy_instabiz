@@ -1,0 +1,436 @@
+/* ─────────────────────────────────────────────────────────────
+   Illustration + layout CSS (things Tailwind utilities alone would make unreadable)
+   Sections are in the same order as the pages.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --ink: #2a170e;
+  --cream: #fffdf8;
+  --rust: #a24a1a;
+  --night: #24130b;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.nav-link {
+  position: relative;
+  padding: 0.5rem 0.95rem;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ink);
+  transition: color 0.15s;
+}
+.nav-link:hover,
+.nav-link.is-active { color: var(--rust); }
+.nav-paw {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  translate: -50% 0;
+  color: var(--rust);
+}
+
+.cursor-paw-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cursor-paw-print {
+  position: absolute;
+  color: rgb(162 74 26 / 0.58);
+  translate: -50% -50%;
+  animation: cursor-paw-fade 0.5s ease-out forwards;
+}
+@keyframes cursor-paw-fade {
+  from { opacity: 0.85; scale: 1; }
+  to { opacity: 0; scale: 0.72; }
+}
+
+.site-header { background: var(--cream); }
+.scallop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 1px);
+  height: 15px;
+  background: radial-gradient(circle at 15px 0, var(--cream) 14px, transparent 15px) repeat-x;
+  background-size: 30px 15px;
+  filter: drop-shadow(0 1.5px 0 rgb(42 23 14 / 0.13));
+  pointer-events: none;
+}
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgb(42 23 14 / 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.menu-overlay.is-open { opacity: 1; pointer-events: auto; }
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  width: min(88vw, 380px);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  background: var(--cream);
+  border-left: 3px solid var(--ink);
+  transform: translateX(105%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow-y: auto;
+}
+.menu-drawer.is-open { transform: none; }
+.drawer-link {
+  padding: 0.7rem 0;
+  border-bottom: 2px dashed rgb(42 23 14 / 0.18);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+.drawer-link.is-active { color: var(--rust); }
+
+.mobile-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+  background: rgb(255 253 248 / 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 2px solid var(--ink);
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.footer-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -89px;
+  width: 100%;
+  height: 90px;
+  color: var(--night);
+  display: block;
+}
+.footer-link { color: rgb(255 253 248 / 0.92); transition: color 0.15s; }
+.footer-link:hover { color: var(--color-gold); }
+.social-pill {
+  padding: 0.5rem 1.15rem;
+  border: 2px solid rgb(255 253 248 / 0.55);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.social-pill:hover { background: rgb(255 253 248 / 0.1); border-color: var(--cream); }
+.moon {
+  position: absolute;
+  top: 3.2rem;
+  right: 10%;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  box-shadow: inset 14px -5px 0 0 #fbe3b0, 0 0 38px 8px rgb(251 227 176 / 0.28);
+  rotate: -18deg;
+}
+
+/* ── Home: hero ─────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(48% 42% at 50% 74%, #fde7bf 0%, rgb(253 231 191 / 0) 72%),
+    linear-gradient(#fffdf8, #fff6e2);
+}
+.hero-title {
+  font-size: clamp(3rem, 5.87vw, 5.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+.hero-stage {
+  position: relative;
+  height: clamp(190px, 18vw, 270px);
+  margin-top: clamp(0.5rem, 2vw, 1.5rem);
+}
+.hero-row {
+  position: absolute;
+  inset: 0 0 -2px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(0.5rem, 1.8vw, 1.6rem);
+  padding-inline: 3.6%;
+}
+.hero-slot { position: relative; flex: 1 1 0; display: flex; justify-content: center; align-items: flex-end; }
+.hero-arch {
+  position: relative;
+  width: 100%;
+  max-width: 172px;
+  border: 3px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 -2px 0 rgb(255 255 255 / 0.5);
+}
+.hero-arch img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: arch-in 0.7s ease both;
+}
+@keyframes arch-in {
+  from { opacity: 0; transform: scale(1.08); }
+  to { opacity: 1; transform: none; }
+}
+.hero-mascot { flex: 0 0 clamp(120px, 14vw, 205px); align-self: flex-end; margin-bottom: -4px; z-index: 2; }
+.hero-label {
+  position: absolute;
+  left: 50%;
+  top: -36px;
+  translate: -50% 0;
+  padding: 0.18rem 0.85rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--cream);
+  font-family: var(--font-hand);
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  rotate: -3deg;
+  animation: arch-in 0.4s ease both;
+  z-index: 3;
+}
+/* the scalloped "fence" the puppies look over */
+.fence {
+  position: relative;
+  z-index: 4;
+  height: 44px;
+  margin-top: -2px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='76' height='44' viewBox='0 0 76 44'%3E%3Cpath d='M1.5 44 V40 a36.500 33 0 0 1 73 0 V44z' fill='%23fff1d8' stroke='%232a170e' stroke-width='3'/%3E%3Cpath d='M12 40 a26 22 0 0 1 52 0' fill='none' stroke='%232a170e' stroke-opacity='.28' stroke-width='1.6' stroke-dasharray='5 4'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 76px 44px;
+  background-position: -20px 0;
+}
+.lattice {
+  background-color: #fff1d8;
+  background-image:
+    linear-gradient(45deg, transparent 48.5%, rgb(162 74 26 / 0.12) 49% 51%, transparent 51.5%),
+    linear-gradient(-45deg, transparent 48.5%, rgb(162 74 26 / 0.12) 49% 51%, transparent 51.5%);
+  background-size: 60px 60px;
+}
+
+
+/* ── Home: "Meet the pups" ───────────────────────────────────── */
+.meet {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(#fff1d8 0%, #fdebc8 45%, #fbe5b9 100%);
+}
+.meet-sticky {
+  padding: clamp(2.5rem, 5vw, 4.5rem) 0 clamp(3.5rem, 6vw, 5.5rem);
+}
+.meet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 3;
+}
+.meet-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-right: clamp(4rem, 7vw, 6.5rem);
+}
+.meet-header-mascot {
+  position: absolute;
+  right: 0;
+  bottom: -1rem;
+  width: clamp(76px, 9vw, 116px);
+  height: auto;
+}
+.meet-track {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: clamp(1rem, 1.7vw, 1.75rem) 0.75rem;
+  width: min(100% - 2.5rem, 1720px);
+  margin: clamp(2rem, 3vw, 2.75rem) auto 0;
+  padding: 0;
+  list-style: none;
+}
+.door-item {
+  position: relative;
+  min-width: 0;
+}
+.door-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 0.45rem 0.35rem 0.6rem;
+  color: inherit;
+  text-decoration: none;
+  isolation: isolate;
+}
+.door-link::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 3px solid transparent;
+  border-radius: 24px;
+  content: '';
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.door-item.is-active .door-link::before,
+.door-link:hover::before,
+.door-link:focus-visible::before {
+  border-color: #b04e1b;
+  background: rgb(255 253 248 / 0.18);
+}
+.door-info {
+  width: 100%;
+  min-height: clamp(5.4rem, 8vw, 7.2rem);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+.door-info h3 {
+  font-size: clamp(0.94rem, 1.5vw, 1.55rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  transition: color 0.2s;
+}
+.door-item.is-active .door-info h3,
+.door-link:hover .door-info h3,
+.door-link:focus-visible .door-info h3 { color: #a24a1a; }
+.door-info p {
+  margin-top: 0.4rem;
+  font-size: clamp(0.7rem, 0.9vw, 0.9rem);
+  line-height: 1.5;
+  font-weight: 500;
+  color: rgb(42 23 14 / 0.88);
+}
+.door {
+  position: relative;
+  width: min(100%, 220px);
+  aspect-ratio: 0.79;
+  border: 3px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+  background: #3a2418;
+}
+.door-room {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background: #fff;
+}
+.door-room img { width: 100%; height: 100%; object-fit: cover; }
+.door::after {
+  position: absolute;
+  z-index: 3;
+  right: -6px;
+  bottom: -8px;
+  left: -6px;
+  height: 9px;
+  border: 3px solid var(--ink);
+  border-radius: 7px;
+  background: #dfa95a;
+  content: '';
+}
+.door-leaf {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 32%, rgb(0 0 0 / 0.1) 32% 33.2%),
+    var(--door-color);
+  transform-origin: left center;
+  transition: transform 0.75s cubic-bezier(0.25, 0.8, 0.25, 1), filter 0.75s;
+  backface-visibility: hidden;
+  box-shadow: inset 0 0 0 3px rgb(0 0 0 / 0.04), 5px 0 0 rgb(42 23 14 / 0.3);
+}
+.door.is-open .door-leaf { transform: perspective(900px) rotateY(-81deg); filter: brightness(0.92); }
+.door-paw { position: absolute; left: 50%; top: 17%; translate: -50% 0; color: rgb(255 255 255 / 0.36); }
+.door-panel {
+  position: absolute;
+  inset: 16% 14% 8%;
+  border: 2px solid rgb(255 255 255 / 0.3);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+}
+.door-knob {
+  position: absolute;
+  right: 11%;
+  top: 56%;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #f6c35c;
+}
+.door-tag {
+  position: absolute;
+  top: 9%;
+  right: -10px;
+  z-index: 2;
+  padding: 0.12rem 0.65rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  font-family: var(--font-hand);
+  font-size: clamp(0.68rem, 0.9vw, 0.92rem);
+  line-height: 1.35;
+  rotate: 8deg;
+  box-shadow: 2px 3px 0 rgb(42 23 14 / 0.2);
+}
+.meet-cta { display: none; }
+
+@media (max-width: 1100px) {
+  .meet-track { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .door-info { min-height: 6.2rem; }
+  .door-info h3 { font-size: clamp(1.1rem, 2.2vw, 1.5rem); }
+}
+@media (max-width: 767px) {
+  .meet-sticky { padding: 2.75rem 0 3rem; }
+  .meet-head { align-items: flex-start; }
+  .meet-actions { display: none; }
+  .meet-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 0.65rem;
+    width: calc(100% - 2rem);
+    margin-top: 1.8rem;
+  }
+  .door-link { padding: 0.4rem 0.3rem 0.55rem; }
+  .door-link::before { border-radius: 19px; }
+  .door-info { min-height: 5.8rem; margin-bottom: 0.55rem; }
+  .door-info h3 { font-size: clamp(1.05rem, 5vw, 1.4rem); }
+  .door-info p { font-size: 0.78rem; }
+  .door { width: min(100%, 190px); }
+  .door-tag { right: -8px; padding-inline: 0.5rem; font-size: 0.75rem; }
+  .meet-cta {
+    display: flex;
+    width: fit-content;
+    margin: 2rem auto 0;
+  }
+}
+@media (max-width: 380px) {
+  .meet-track { width: calc(100% - 1.25rem); gap: 1rem 0.35rem; }
+  .door-info { min-height: 6.2rem; }
+  .door-info h3 { font-size: 1rem; }
+  .door-info p { font-size: 0.72rem; }
+}

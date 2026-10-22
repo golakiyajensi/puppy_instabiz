@@ -1,0 +1,83 @@
+/* Puppy profile page (/puppies/:slug). Imported into the "components" layer (see index.css). */
+.detail { position: relative; background: linear-gradient(#ddd6cb 0, #ece6dc 520px, #f5f1ea 1100px, #fffdf8 1700px); }
+.bookmark {
+  position: absolute; left: 18px; top: 2px; z-index: 5; width: 20px; min-height: 85px; max-height: calc(100% - 300px);
+  background: linear-gradient(90deg, #b8541f, #c96a2f 55%, #a74818); border-radius: 8px 8px 0 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 12px), 0 100%); pointer-events: none;
+}
+.label-row { display: flex; align-items: center; gap: 0.7rem; margin: 0; }
+.label-num { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border: 2.5px solid #2a170e; border-radius: 50%; background: #fffdf8; font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; line-height: 1; }
+.detail-top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(2rem, 4vw, 3.4rem); align-items: start; margin-top: 1rem; }
+.detail-side { margin-top: 5rem; display: grid; gap: 2.2rem; }
+
+.gallery-frame {
+  position: relative; overflow: hidden; aspect-ratio: 5 / 6; background: #e8d5b5; border: 3px solid #2a170e; border-radius: 24px;
+  box-shadow: 7px 7px 0 0 #f5f1ea, 7px 7px 0 3px #2a170e, 14px 14px 0 0 #f5f1ea, 14px 14px 0 3px #2a170e;
+}
+.gallery-img { display: block; width: 100%; height: 100%; object-fit: cover; animation: gallery-in 0.4s ease both; }
+@keyframes gallery-in { from { opacity: 0.2; transform: scale(1.02); } to { opacity: 1; transform: none; } }
+.gallery-nav { position: absolute; bottom: 1.1rem; display: grid; place-items: center; width: 46px; height: 46px; border: 2.5px solid #2a170e; border-radius: 50%; background: #fffdf8; color: #2a170e; cursor: pointer; transition: transform 0.15s, background 0.15s; }
+.gallery-nav:hover { background: #f6dfb2; transform: scale(1.08); }
+.gallery-prev { left: 1.1rem; }
+.gallery-next { right: 1.1rem; }
+.gallery-count { position: absolute; left: 50%; bottom: 1.5rem; translate: -50% 0; padding: 0.1rem 0.85rem; border-radius: 999px; background: rgb(42 23 14 / 0.88); color: #fff; font-size: 0.82rem; font-weight: 700; }
+.gallery-play { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; place-items: center; width: 76px; height: 76px; border: 3px solid #2a170e; border-radius: 50%; background: rgb(255 253 248 / 0.92); color: #2a170e; transition: transform 0.2s; }
+.gallery-play:hover { transform: scale(1.1); }
+.gallery-thumbs { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 2rem 0 0; padding: 0; list-style: none; }
+.thumb { position: relative; display: block; width: 98px; height: 112px; padding: 0; overflow: hidden; border: 3px solid #2a170e; border-radius: 14px; background: #e8d5b5; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+.thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.thumb:not(.is-on) { opacity: 0.8; border-color: rgb(42 23 14 / 0.55); }
+.thumb:hover { opacity: 1; transform: translateY(-2px); }
+.thumb.is-on { border-color: #b8541f; rotate: -3deg; box-shadow: 0 4px 0 rgb(42 23 14 / 0.15); }
+.thumb-play { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(42 23 14 / 0.4); color: #fff; }
+
+.sketch-box.info-card { position: relative; padding: 2rem clamp(1.4rem, 2.4vw, 2.2rem) 1.8rem; border-radius: 36px; border-width: 3px; background: #fffdf8; box-shadow: 9px 9px 0 rgb(42 23 14 / 0.14); }
+.info-card::after { content: ''; position: absolute; inset: 9px; border: 1px dashed rgb(42 23 14 / 0.22); border-radius: 28px; pointer-events: none; }
+.info-tape { position: absolute; left: -14px; top: -14px; width: 36px; height: 36px; border: 3px solid #c98a4a; border-radius: 50%; background: #f6e3b8; }
+.info-tape::after { content: ''; position: absolute; left: 7px; right: 7px; top: 50%; height: 3px; margin-top: -1.5px; background: #2a170e; border-radius: 2px; }
+.info-peek { position: absolute; right: 1.6rem; top: -52px; width: 66px; height: auto; }
+.status-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.22rem 0.85rem; border-radius: 999px; background: #fbe3c0; font-size: 0.86rem; font-weight: 500; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 1rem; margin: 2.2rem 0 0; }
+.facts dt { font-size: 0.86rem; color: rgb(42 23 14 / 0.72); }
+.facts dd { margin: 0.1rem 0 0; font-size: 1.1rem; }
+.incl-card {
+  position: relative; rotate: -1deg; padding: 1.6rem clamp(1.3rem, 2.4vw, 2.2rem) 1.8rem; border: 3px solid #2a170e; border-radius: 28px 24px 26px 22px; background-color: #fff6e6; box-shadow: 6px 7px 0 rgb(42 23 14 / 0.1);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='22' viewBox='0 0 44 22'%3E%3Cg fill='none' stroke='%23c9803f' stroke-opacity='.1' stroke-width='1.4'%3E%3Cpath d='M0 22a22 22 0 0 1 44 0'/%3E%3Cpath d='M-22 11a22 22 0 0 1 44 0'/%3E%3Cpath d='M22 11a22 22 0 0 1 44 0'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.way-home { margin-top: clamp(3rem, 6vw, 5rem); }
+.way-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.6rem; margin: 2.4rem 0 0; padding: 0; list-style: none; }
+.way-steps li { position: relative; }
+.way-num { display: grid; place-items: center; width: 54px; height: 54px; border: 3px solid #2a170e; border-radius: 50%; background: #fffdf8; font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; line-height: 1; }
+.way-paws {
+  position: absolute; left: 70px; right: 12px; top: 20px; height: 14px; opacity: 0.85;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='14' viewBox='0 0 32 32'%3E%3Cg fill='%23d99a6c'%3E%3Cellipse cx='7.5' cy='14' rx='3.2' ry='4.2' transform='rotate(-18 7.5 14)'/%3E%3Cellipse cx='13' cy='8.5' rx='3.2' ry='4.4' transform='rotate(-6 13 8.5)'/%3E%3Cellipse cx='19.5' cy='8.5' rx='3.2' ry='4.4' transform='rotate(6 19.5 8.5)'/%3E%3Cellipse cx='25' cy='14' rx='3.2' ry='4.2' transform='rotate(18 25 14)'/%3E%3Cpath d='M16 15c-4.6 0-8.6 4.8-8.6 8.6 0 2.6 2 4 4.4 4 1.6 0 2.6-.7 4.2-.7s2.6.7 4.2.7c2.4 0 4.4-1.4 4.4-4C24.6 19.8 20.6 15 16 15z'/%3E%3C/g%3E%3C/svg%3E") repeat-x left center / 22px 14px;
+}
+
+.sketch-box.letter { position: relative; margin-top: clamp(3rem, 6vw, 5rem); padding: clamp(1.6rem, 3.4vw, 3rem); border-radius: 34px; box-shadow: 9px 9px 0 rgb(42 23 14 / 0.13); }
+.letter-stamp { position: absolute; right: 26px; top: -26px; display: grid; place-items: center; width: 78px; height: 78px; rotate: 5deg; border: 2.5px dashed #b8541f; background: #f8e2b8; }
+.letter-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr); gap: clamp(1.6rem, 4vw, 3.4rem); align-items: start; }
+
+.neighbours { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-top: 3rem; }
+.neighbour { display: flex; align-items: center; gap: 1.1rem; min-height: 132px; padding: 0 1.2rem; border: 3px solid #2a170e; border-radius: 34px; background: #fffdf8; color: inherit; transition: transform 0.2s, box-shadow 0.2s; }
+.neighbour:hover { transform: translateY(-3px); box-shadow: 0 6px 0 rgb(42 23 14 / 0.12); }
+.neighbour.is-next { justify-content: flex-end; text-align: right; }
+.neighbour img { width: 80px; height: 96px; object-fit: cover; border: 2px solid #2a170e; border-radius: 40px 40px 0 0; background: #e8d5b5; }
+.neighbour strong { display: block; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.15rem, 1.8vw, 1.5rem); letter-spacing: -0.03em; line-height: 1.1; }
+.neighbour .hand { color: rgb(42 23 14 / 0.8); }
+
+@media (max-width: 1023px) {
+  .bookmark { display: none; }
+  .detail-top { grid-template-columns: 1fr; }
+  .detail-side { margin-top: 3.4rem; }
+  .way-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.2rem 1.4rem; }
+  .letter-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .way-steps { grid-template-columns: 1fr; }
+  .way-paws { display: none; }
+  .neighbours { grid-template-columns: 1fr; }
+  .gallery-frame { box-shadow: 5px 5px 0 0 #f5f1ea, 5px 5px 0 3px #2a170e; }
+  .thumb { width: 76px; height: 88px; }
+  .facts { gap: 1rem 0.6rem; }
+}

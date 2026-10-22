@@ -1,0 +1,28 @@
+{
+  "name": "puppy-clone-client",
+  "version": "1.0.0",
+  "private": true,
+  "description": "React + Vite + Tailwind CSS front end for the puppy website clone",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/figtree": "^5.3.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/shantell-sans": "^5.3.0",
+    "lucide-react": "^1.61.0",
+    "puppy-website-clone": "file:..",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.5"
+  }
+}

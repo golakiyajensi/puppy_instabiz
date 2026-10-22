@@ -1,0 +1,520 @@
+-- ============================================================================
+--  Puppy Website Clone - MySQL schema
+--  Works on MySQL 5.7+ and MySQL 8.x (InnoDB, utf8mb4).
+--
+--  HOW TO USE
+--    1. Easiest:  cd server  &&  npm run db:setup      (runs schema.sql + seed.sql for you)
+--    2. Manually: import  puppy_clone.sql  in MySQL Workbench / phpMyAdmin / HeidiSQL,
+--                 or run   mysql -u root -p < database/puppy_clone.sql
+--
+--  WARNING: this script DROPS and re-creates every table, so running it again
+--  resets the database (all saved enquiries are deleted).
+-- ============================================================================
+
+CREATE DATABASE IF NOT EXISTS puppy_clone
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE puppy_clone;
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP VIEW  IF EXISTS v_inbox;
+DROP TABLE IF EXISTS contact_messages;
+DROP TABLE IF EXISTS enquiries;
+DROP TABLE IF EXISTS puppy_images;
+DROP TABLE IF EXISTS puppies;
+DROP TABLE IF EXISTS breeds;
+DROP TABLE IF EXISTS faqs;
+DROP TABLE IF EXISTS testimonials;
+DROP TABLE IF EXISTS family_photos;
+DROP TABLE IF EXISTS journey_steps;
+DROP TABLE IF EXISTS trust_points;
+DROP TABLE IF EXISTS site_settings;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ----------------------------------------------------------------------------
+-- breeds: one row per breed family. `show_in_filter` = shown as a chip on /puppies
+-- ----------------------------------------------------------------------------
+CREATE TABLE breeds (
+  id             SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  slug           VARCHAR(40)       NOT NULL,
+  name           VARCHAR(80)       NOT NULL,
+  show_in_filter TINYINT(1)        NOT NULL DEFAULT 0,
+  sort_order     SMALLINT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_breeds_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- puppies: every puppy, available or already gone home
+--   name         NULL for puppies without a name (the page then shows the breed)
+--   breed_label  the text shown to visitors, e.g. "Korean Teacup Maltipoo"
+--   age_label    free text, e.g. "3 months" or "3 months Maltipoo & 2 months Cavapoo"
+--   origin       local = in the Dubai showroom, imported = ordered from abroad
+-- ----------------------------------------------------------------------------
+CREATE TABLE puppies (
+  id          INT UNSIGNED      NOT NULL AUTO_INCREMENT,
+  slug        VARCHAR(120)      NOT NULL,
+  name        VARCHAR(60)       NULL,
+  breed_id    SMALLINT UNSIGNED NOT NULL,
+  breed_label VARCHAR(120)      NOT NULL,
+  sex         ENUM('boy','girl','boy_girl') NOT NULL,
+  age_label   VARCHAR(120)      NOT NULL,
+  colour      VARCHAR(60)       NULL,
+  origin      ENUM('local','imported')      NOT NULL DEFAULT 'imported',
+  is_teacup   TINYINT(1)        NOT NULL DEFAULT 0,
+  has_video   TINYINT(1)        NOT NULL DEFAULT 0,
+  status      ENUM('available','gone_home') NOT NULL DEFAULT 'available',
+  sort_order  INT               NOT NULL DEFAULT 0,
+  created_at  TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_puppies_slug (slug),
+  KEY idx_puppies_status_order (status, sort_order),
+  KEY idx_puppies_origin (origin),
+  KEY idx_puppies_breed (breed_id),
+  CONSTRAINT fk_puppies_breed FOREIGN KEY (breed_id) REFERENCES breeds (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- puppy_images: photo gallery of each puppy (is_video_poster = poster frame of a video)
+-- ----------------------------------------------------------------------------
+CREATE TABLE puppy_images (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  puppy_id        INT UNSIGNED NOT NULL,
+  url             VARCHAR(255) NOT NULL,
+  alt             VARCHAR(255) NULL,
+  is_video_poster TINYINT(1)   NOT NULL DEFAULT 0,
+  sort_order      SMALLINT     NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_images_puppy (puppy_id, sort_order),
+  CONSTRAINT fk_images_puppy FOREIGN KEY (puppy_id) REFERENCES puppies (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Content tables
+-- ----------------------------------------------------------------------------
+CREATE TABLE faqs (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  question     VARCHAR(255) NOT NULL,
+  answer       TEXT         NOT NULL,
+  show_on_home TINYINT(1)   NOT NULL DEFAULT 0,
+  is_active    TINYINT(1)   NOT NULL DEFAULT 1,
+  sort_order   INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_faqs_active_order (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE testimonials (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  author_name     VARCHAR(80)  NOT NULL,
+  author_location VARCHAR(80)  NULL,
+  puppy_breed     VARCHAR(80)  NULL,
+  quote           TEXT         NOT NULL,
+  is_featured     TINYINT(1)   NOT NULL DEFAULT 0,
+  sort_order      INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE family_photos (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  image_url  VARCHAR(255) NOT NULL,
+  caption    VARCHAR(160) NULL,
+  alt        VARCHAR(255) NULL,
+  sort_order INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_family_order (sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE journey_steps (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  step_no     TINYINT      NOT NULL,
+  title       VARCHAR(120) NOT NULL,
+  description VARCHAR(500) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_journey_step (step_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE trust_points (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  title       VARCHAR(80)  NOT NULL,
+  description VARCHAR(255) NOT NULL,
+  icon_key    VARCHAR(30)  NOT NULL,
+  sort_order  INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE site_settings (
+  setting_key   VARCHAR(60)  NOT NULL,
+  setting_value VARCHAR(500) NOT NULL,
+  PRIMARY KEY (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Form submissions
+--   enquiries         = "Ask about Max" form on a puppy page
+--   contact_messages  = "Dear TeddyPups" letter on the contact page
+--   status            = new -> contacted -> closed (for whoever reads the inbox)
+-- ----------------------------------------------------------------------------
+CREATE TABLE enquiries (
+  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  puppy_id   INT UNSIGNED    NULL,
+  name       VARCHAR(100)    NOT NULL,
+  phone      VARCHAR(30)     NOT NULL,
+  email      VARCHAR(150)    NULL,
+  area       VARCHAR(100)    NULL,
+  message    TEXT            NULL,
+  status     ENUM('new','contacted','closed') NOT NULL DEFAULT 'new',
+  ip_address VARCHAR(45)     NULL,
+  user_agent VARCHAR(255)    NULL,
+  created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_enquiries_status_created (status, created_at),
+  KEY idx_enquiries_puppy (puppy_id),
+  CONSTRAINT fk_enquiries_puppy FOREIGN KEY (puppy_id) REFERENCES puppies (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE contact_messages (
+  id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  puppy_interest_id INT UNSIGNED    NULL,
+  name              VARCHAR(100)    NOT NULL,
+  phone             VARCHAR(30)     NOT NULL,
+  email             VARCHAR(150)    NULL,
+  location          VARCHAR(100)    NULL,
+  message           TEXT            NULL,
+  status            ENUM('new','contacted','closed') NOT NULL DEFAULT 'new',
+  ip_address        VARCHAR(45)     NULL,
+  user_agent        VARCHAR(255)    NULL,
+  created_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_contact_status_created (status, created_at),
+  CONSTRAINT fk_contact_puppy FOREIGN KEY (puppy_interest_id) REFERENCES puppies (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- v_inbox: both kinds of submissions in one list, newest first
+--   Try it:  SELECT * FROM v_inbox ORDER BY created_at DESC;
+-- ----------------------------------------------------------------------------
+CREATE VIEW v_inbox AS
+  SELECT 'puppy_enquiry' AS source, e.id, e.created_at, e.status, e.name, e.phone, e.email,
+         e.area AS location, e.message, p.slug AS puppy_slug
+  FROM enquiries e
+  LEFT JOIN puppies p ON p.id = e.puppy_id
+  UNION ALL
+  SELECT 'contact_form' AS source, c.id, c.created_at, c.status, c.name, c.phone, c.email,
+         c.location AS location, c.message, p.slug AS puppy_slug
+  FROM contact_messages c
+  LEFT JOIN puppies p ON p.id = c.puppy_interest_id;
+
+
+-- ============================================================================
+--  Puppy Website Clone - sample data (run AFTER schema.sql)
+--  42 puppies, 132 puppy photos, 9 FAQs, 64 family photos.
+--  Content mirrors the reference site (puppy.instabizweb.com) for evaluation purposes.
+-- ============================================================================
+
+
+-- breeds
+INSERT INTO breeds (id, slug, name, show_in_filter, sort_order) VALUES
+  (1, 'maltipoo', 'Maltipoo', 1, 1),
+  (2, 'pomeranian', 'Pomeranian', 1, 2),
+  (3, 'poodle', 'Poodle', 1, 3),
+  (4, 'cavapoo', 'Cavapoo', 1, 4),
+  (5, 'shih-tzu', 'Shih Tzu', 1, 5),
+  (6, 'pomsky', 'Pomsky', 0, 6),
+  (7, 'maltese', 'Maltese', 0, 7),
+  (8, 'bichon', 'Bichon', 0, 8);
+
+-- puppies (15 available + 27 gone home)
+INSERT INTO puppies (id, slug, name, breed_id, breed_label, sex, age_label, colour, origin, is_teacup, has_video, status, sort_order) VALUES
+  (1, 'maltipoo-max-male', 'Max', 1, 'Maltipoo', 'boy', '3 months', NULL, 'imported', 0, 1, 'available', 1),
+  (2, 'korean-teacup-maltipoo-female', NULL, 1, 'Korean Teacup Maltipoo', 'girl', '2 months', NULL, 'imported', 1, 1, 'available', 2),
+  (3, 'korean-teacup-poodle-female', NULL, 3, 'Korean Teacup Poodle', 'girl', '2 months', NULL, 'imported', 1, 0, 'available', 3),
+  (4, 'maltipoo-cavapoo-male', NULL, 1, 'Maltipoo & Cavapoo', 'boy', '3 months Maltipoo & 2 months Cavapoo', NULL, 'imported', 0, 1, 'available', 4),
+  (5, 'toy-poodle-male-female', NULL, 3, 'Toy Poodle', 'boy_girl', '2 months', NULL, 'imported', 0, 0, 'available', 5),
+  (6, 'maltipoo-female-2', NULL, 1, 'Maltipoo', 'girl', '3 months', NULL, 'imported', 0, 1, 'available', 6),
+  (7, 'pomeranian-female', NULL, 2, 'Pomeranian', 'girl', '3 months', NULL, 'imported', 0, 0, 'available', 7),
+  (8, 'copper-male', 'Copper', 4, 'Cavapoo', 'boy', '2 months', NULL, 'imported', 0, 0, 'available', 8),
+  (9, 'shitzu-female', NULL, 5, 'Shih Tzu', 'girl', '2 months', NULL, 'imported', 0, 0, 'available', 9),
+  (10, 'shitzu-male', NULL, 5, 'Shih Tzu', 'boy', '2 months', NULL, 'imported', 0, 0, 'available', 10),
+  (11, 'maltipoo-female-1', NULL, 1, 'Maltipoo', 'girl', '2.5 months', NULL, 'imported', 0, 0, 'available', 11),
+  (12, 'maltipoo-female', NULL, 1, 'Maltipoo', 'girl', '2 months', NULL, 'imported', 0, 0, 'available', 12),
+  (13, 'korean-teacup-pomeranian-1', NULL, 2, 'Korean Teacup Pomeranian', 'girl', '2 months', NULL, 'imported', 1, 0, 'available', 13),
+  (14, 'korean-teacup-pomeranian', NULL, 2, 'Korean Teacup Pomeranian', 'girl', '2 months', NULL, 'imported', 1, 0, 'available', 14),
+  (15, 'korean-teacup-pomeranian-male', NULL, 2, 'Korean Teacup Pomeranian', 'boy', '2 months', NULL, 'imported', 1, 0, 'available', 15),
+  (16, 'pomeranian-ace-boy', 'Ace', 2, 'Pomeranian', 'boy', '3 months', NULL, 'imported', 0, 0, 'gone_home', 1),
+  (17, 'poodle-leo-male', 'Leo', 3, 'Poodle', 'boy', '3 months', NULL, 'imported', 0, 0, 'gone_home', 2),
+  (18, 'maltipoo-mia-girl', 'Mia', 1, 'Maltipoo', 'girl', '3 months', 'Golden Cream', 'local', 0, 0, 'gone_home', 3),
+  (19, 'maltipoo-sadie-girl', 'Sadie', 1, 'Maltipoo', 'girl', '3 months', NULL, 'imported', 0, 0, 'gone_home', 4),
+  (20, 'blue-marle-pomeranian', NULL, 2, 'Pomeranian', 'boy', '3 months', 'Marble', 'imported', 0, 0, 'gone_home', 5),
+  (21, 'pomsky-ollie-boy', 'Ollie', 6, 'Pomsky', 'boy', '3 months', NULL, 'imported', 0, 0, 'gone_home', 6),
+  (22, 'maltipoo-bruno-boy', 'Bruno', 1, 'Maltipoo', 'boy', '3 months', NULL, 'local', 0, 0, 'gone_home', 7),
+  (23, 'maltese-buddy-male', 'Buddy', 7, 'Maltese', 'boy', '2 months', NULL, 'local', 0, 0, 'gone_home', 8),
+  (24, 'maltese-charlie-male', 'Charlie', 7, 'Maltese', 'boy', '3.5 months', NULL, 'imported', 0, 0, 'gone_home', 9),
+  (25, 'pomeranian-daisy-girl', 'Daisy', 2, 'Pomeranian', 'girl', '2 months', NULL, 'local', 0, 0, 'gone_home', 10),
+  (26, 'pomeranian-bella-female', 'Bella', 2, 'Pomeranian', 'girl', '4 months', NULL, 'imported', 0, 0, 'gone_home', 11),
+  (27, 'poodle-teddy-male', 'Teddy', 3, 'Poodle', 'boy', '3 months', NULL, 'imported', 0, 0, 'gone_home', 12),
+  (28, 'poodle-molly-female', 'Molly', 3, 'Poodle', 'girl', '3 months', NULL, 'local', 0, 0, 'gone_home', 13),
+  (29, 'pomski-coco-girl', 'Coco', 6, 'Pomsky', 'girl', '3 months', NULL, 'imported', 0, 0, 'gone_home', 14),
+  (30, 'pomsky-rosie-girl', 'Rosie', 6, 'Pomsky', 'girl', '3 months', NULL, 'local', 0, 0, 'gone_home', 15),
+  (31, 'pomeranian-leo-boy', 'Leo', 2, 'Pomeranian', 'boy', '3 months', NULL, 'local', 0, 0, 'gone_home', 16),
+  (32, 'poodle-molly-girl', 'Molly', 3, 'Poodle', 'girl', '3 months', NULL, 'imported', 0, 0, 'gone_home', 17),
+  (33, 'poodle-rocky-boy', 'Rocky', 3, 'Poodle', 'boy', '3 months', NULL, 'imported', 0, 0, 'gone_home', 18),
+  (34, 'maltipoo-sophie-girl', 'Sophie', 1, 'Maltipoo', 'girl', '3 months', NULL, 'local', 0, 0, 'gone_home', 19),
+  (35, 'maltipoo-lola-girl', 'Lola', 1, 'Maltipoo', 'girl', '3 months', NULL, 'local', 0, 0, 'gone_home', 20),
+  (36, 'pomeranian-rex-boy', 'Rex', 2, 'Pomeranian', 'boy', '5 months', NULL, 'imported', 0, 0, 'gone_home', 21),
+  (37, 'pomsky-finn-male', 'Finn', 6, 'Pomsky', 'boy', '3 months', NULL, 'imported', 0, 0, 'gone_home', 22),
+  (38, 'maltipoo-zoe-girl', 'Zoe', 1, 'Maltipoo', 'girl', '3 months', NULL, 'imported', 0, 0, 'gone_home', 23),
+  (39, 'pomeranian-mimi-girl', 'Mimi', 2, 'Pomeranian', 'girl', '3 months', NULL, 'local', 0, 0, 'gone_home', 24),
+  (40, 'bichon-bailey-boy', 'Bailey', 8, 'Bichon', 'boy', '3 months', NULL, 'local', 0, 0, 'gone_home', 25),
+  (41, 'puppy', NULL, 1, 'Maltipoo', 'girl', '3 months', NULL, 'imported', 0, 0, 'gone_home', 26),
+  (42, 'maltipo', NULL, 3, 'Poodle', 'girl', '3 months', NULL, 'local', 0, 0, 'gone_home', 27);
+
+-- puppy photos
+INSERT INTO puppy_images (id, puppy_id, url, alt, is_video_poster, sort_order) VALUES
+  (1, 1, '/images/puppies/maltipoo-max-male/1.webp', 'Max, male Maltipoo puppy', 0, 1),
+  (2, 1, '/images/puppies/maltipoo-max-male/2.webp', 'Max, male Maltipoo puppy (photo 2)', 1, 2),
+  (3, 2, '/images/puppies/korean-teacup-maltipoo-female/1.webp', 'Female Korean Teacup Maltipoo puppy', 0, 1),
+  (4, 2, '/images/puppies/korean-teacup-maltipoo-female/2.webp', 'Female Korean Teacup Maltipoo puppy (photo 2)', 0, 2),
+  (5, 2, '/images/puppies/korean-teacup-maltipoo-female/3.webp', 'Female Korean Teacup Maltipoo puppy (photo 3)', 0, 3),
+  (6, 2, '/images/puppies/korean-teacup-maltipoo-female/4.webp', 'Female Korean Teacup Maltipoo puppy (photo 4)', 0, 4),
+  (7, 2, '/images/puppies/korean-teacup-maltipoo-female/5.webp', 'Female Korean Teacup Maltipoo puppy (photo 5)', 0, 5),
+  (8, 2, '/images/puppies/korean-teacup-maltipoo-female/6.webp', 'Female Korean Teacup Maltipoo puppy (photo 6)', 0, 6),
+  (9, 2, '/images/puppies/korean-teacup-maltipoo-female/7.webp', 'Female Korean Teacup Maltipoo puppy (photo 7)', 0, 7),
+  (10, 2, '/images/puppies/korean-teacup-maltipoo-female/8.webp', 'Female Korean Teacup Maltipoo puppy (photo 8)', 0, 8),
+  (11, 2, '/images/puppies/korean-teacup-maltipoo-female/9.webp', 'Female Korean Teacup Maltipoo puppy (photo 9)', 0, 9),
+  (12, 2, '/images/puppies/korean-teacup-maltipoo-female/10.webp', 'Female Korean Teacup Maltipoo puppy (photo 10)', 0, 10),
+  (13, 2, '/images/puppies/korean-teacup-maltipoo-female/11.webp', 'Female Korean Teacup Maltipoo puppy (photo 11)', 1, 11),
+  (14, 3, '/images/puppies/korean-teacup-poodle-female/1.webp', 'Female Korean Teacup Poodle puppy', 0, 1),
+  (15, 3, '/images/puppies/korean-teacup-poodle-female/2.webp', 'Female Korean Teacup Poodle puppy (photo 2)', 0, 2),
+  (16, 3, '/images/puppies/korean-teacup-poodle-female/3.webp', 'Female Korean Teacup Poodle puppy (photo 3)', 0, 3),
+  (17, 3, '/images/puppies/korean-teacup-poodle-female/4.webp', 'Female Korean Teacup Poodle puppy (photo 4)', 0, 4),
+  (18, 4, '/images/puppies/maltipoo-cavapoo-male/1.webp', 'Male Maltipoo & Cavapoo puppy', 0, 1),
+  (19, 4, '/images/puppies/maltipoo-cavapoo-male/2.webp', 'Male Maltipoo & Cavapoo puppy (photo 2)', 0, 2),
+  (20, 4, '/images/puppies/maltipoo-cavapoo-male/3.webp', 'Male Maltipoo & Cavapoo puppy (photo 3)', 1, 3),
+  (21, 5, '/images/puppies/toy-poodle-male-female/1.webp', 'Male and female Toy Poodle puppy', 0, 1),
+  (22, 5, '/images/puppies/toy-poodle-male-female/2.webp', 'Male and female Toy Poodle puppy (photo 2)', 0, 2),
+  (23, 5, '/images/puppies/toy-poodle-male-female/3.webp', 'Male and female Toy Poodle puppy (photo 3)', 0, 3),
+  (24, 6, '/images/puppies/maltipoo-female-2/1.webp', 'Female Maltipoo puppy', 0, 1),
+  (25, 6, '/images/puppies/maltipoo-female-2/2.webp', 'Female Maltipoo puppy (photo 2)', 0, 2),
+  (26, 6, '/images/puppies/maltipoo-female-2/3.webp', 'Female Maltipoo puppy (photo 3)', 0, 3),
+  (27, 6, '/images/puppies/maltipoo-female-2/4.webp', 'Female Maltipoo puppy (photo 4)', 0, 4),
+  (28, 6, '/images/puppies/maltipoo-female-2/5.webp', 'Female Maltipoo puppy (photo 5)', 1, 5),
+  (29, 6, '/images/puppies/maltipoo-female-2/6.webp', 'Female Maltipoo puppy (photo 6)', 1, 6),
+  (30, 6, '/images/puppies/maltipoo-female-2/7.webp', 'Female Maltipoo puppy (photo 7)', 1, 7),
+  (31, 7, '/images/puppies/pomeranian-female/1.webp', 'Female Pomeranian puppy', 0, 1),
+  (32, 7, '/images/puppies/pomeranian-female/2.webp', 'Female Pomeranian puppy (photo 2)', 0, 2),
+  (33, 7, '/images/puppies/pomeranian-female/3.webp', 'Female Pomeranian puppy (photo 3)', 0, 3),
+  (34, 8, '/images/puppies/copper-male/1.webp', 'Copper, male Cavapoo puppy', 0, 1),
+  (35, 8, '/images/puppies/copper-male/2.webp', 'Copper, male Cavapoo puppy (photo 2)', 0, 2),
+  (36, 8, '/images/puppies/copper-male/3.webp', 'Copper, male Cavapoo puppy (photo 3)', 0, 3),
+  (37, 8, '/images/puppies/copper-male/4.webp', 'Copper, male Cavapoo puppy (photo 4)', 0, 4),
+  (38, 9, '/images/puppies/shitzu-female/1.webp', 'Female Shih Tzu puppy', 0, 1),
+  (39, 9, '/images/puppies/shitzu-female/2.webp', 'Female Shih Tzu puppy (photo 2)', 0, 2),
+  (40, 10, '/images/puppies/shitzu-male/1.webp', 'Male Shih Tzu puppy', 0, 1),
+  (41, 10, '/images/puppies/shitzu-male/2.webp', 'Male Shih Tzu puppy (photo 2)', 0, 2),
+  (42, 11, '/images/puppies/maltipoo-female-1/1.webp', 'Female Maltipoo puppy', 0, 1),
+  (43, 11, '/images/puppies/maltipoo-female-1/2.webp', 'Female Maltipoo puppy (photo 2)', 0, 2),
+  (44, 11, '/images/puppies/maltipoo-female-1/3.webp', 'Female Maltipoo puppy (photo 3)', 0, 3),
+  (45, 11, '/images/puppies/maltipoo-female-1/4.webp', 'Female Maltipoo puppy (photo 4)', 0, 4),
+  (46, 12, '/images/puppies/maltipoo-female/1.webp', 'Female Maltipoo puppy', 0, 1),
+  (47, 12, '/images/puppies/maltipoo-female/2.webp', 'Female Maltipoo puppy (photo 2)', 0, 2),
+  (48, 12, '/images/puppies/maltipoo-female/3.webp', 'Female Maltipoo puppy (photo 3)', 0, 3),
+  (49, 12, '/images/puppies/maltipoo-female/4.webp', 'Female Maltipoo puppy (photo 4)', 0, 4),
+  (50, 13, '/images/puppies/korean-teacup-pomeranian-1/1.webp', 'Female Korean Teacup Pomeranian puppy', 0, 1),
+  (51, 13, '/images/puppies/korean-teacup-pomeranian-1/2.webp', 'Female Korean Teacup Pomeranian puppy (photo 2)', 0, 2),
+  (52, 14, '/images/puppies/korean-teacup-pomeranian/1.webp', 'Female Korean Teacup Pomeranian puppy', 0, 1),
+  (53, 14, '/images/puppies/korean-teacup-pomeranian/2.webp', 'Female Korean Teacup Pomeranian puppy (photo 2)', 0, 2),
+  (54, 15, '/images/puppies/korean-teacup-pomeranian-male/1.webp', 'Male Korean Teacup Pomeranian puppy', 0, 1),
+  (55, 15, '/images/puppies/korean-teacup-pomeranian-male/2.webp', 'Male Korean Teacup Pomeranian puppy (photo 2)', 0, 2),
+  (56, 15, '/images/puppies/korean-teacup-pomeranian-male/3.webp', 'Male Korean Teacup Pomeranian puppy (photo 3)', 0, 3),
+  (57, 15, '/images/puppies/korean-teacup-pomeranian-male/4.webp', 'Male Korean Teacup Pomeranian puppy (photo 4)', 0, 4),
+  (58, 16, '/images/puppies/pomeranian-ace-boy/1.webp', 'Ace, male Pomeranian puppy', 0, 1),
+  (59, 16, '/images/puppies/pomeranian-ace-boy/2.webp', 'Ace, male Pomeranian puppy (photo 2)', 0, 2),
+  (60, 16, '/images/puppies/pomeranian-ace-boy/3.webp', 'Ace, male Pomeranian puppy (photo 3)', 0, 3),
+  (61, 16, '/images/puppies/pomeranian-ace-boy/4.webp', 'Ace, male Pomeranian puppy (photo 4)', 0, 4),
+  (62, 17, '/images/puppies/poodle-leo-male/1.webp', 'Leo, male Poodle puppy', 0, 1),
+  (63, 17, '/images/puppies/poodle-leo-male/2.webp', 'Leo, male Poodle puppy (photo 2)', 0, 2),
+  (64, 17, '/images/puppies/poodle-leo-male/3.webp', 'Leo, male Poodle puppy (photo 3)', 0, 3),
+  (65, 17, '/images/puppies/poodle-leo-male/4.webp', 'Leo, male Poodle puppy (photo 4)', 0, 4),
+  (66, 18, '/images/puppies/maltipoo-mia-girl/1.webp', 'Mia, female Maltipoo puppy', 0, 1),
+  (67, 18, '/images/puppies/maltipoo-mia-girl/2.webp', 'Mia, female Maltipoo puppy (photo 2)', 0, 2),
+  (68, 18, '/images/puppies/maltipoo-mia-girl/3.webp', 'Mia, female Maltipoo puppy (photo 3)', 0, 3),
+  (69, 18, '/images/puppies/maltipoo-mia-girl/4.webp', 'Mia, female Maltipoo puppy (photo 4)', 0, 4),
+  (70, 19, '/images/puppies/maltipoo-sadie-girl/1.webp', 'Sadie, female Maltipoo puppy', 0, 1),
+  (71, 19, '/images/puppies/maltipoo-sadie-girl/2.webp', 'Sadie, female Maltipoo puppy (photo 2)', 0, 2),
+  (72, 19, '/images/puppies/maltipoo-sadie-girl/3.webp', 'Sadie, female Maltipoo puppy (photo 3)', 0, 3),
+  (73, 19, '/images/puppies/maltipoo-mia-girl/1.webp', 'Sadie, female Maltipoo puppy (photo 4)', 0, 4),
+  (74, 20, '/images/puppies/blue-marle-pomeranian/1.webp', 'Male Pomeranian puppy', 0, 1),
+  (75, 21, '/images/puppies/pomsky-ollie-boy/1.webp', 'Ollie, male Pomsky puppy', 0, 1),
+  (76, 21, '/images/puppies/pomsky-ollie-boy/2.webp', 'Ollie, male Pomsky puppy (photo 2)', 0, 2),
+  (77, 21, '/images/puppies/pomsky-ollie-boy/3.webp', 'Ollie, male Pomsky puppy (photo 3)', 0, 3),
+  (78, 22, '/images/puppies/maltipoo-bruno-boy/1.webp', 'Bruno, male Maltipoo puppy', 0, 1),
+  (79, 22, '/images/puppies/maltipoo-bruno-boy/2.webp', 'Bruno, male Maltipoo puppy (photo 2)', 0, 2),
+  (80, 22, '/images/puppies/maltipoo-bruno-boy/3.webp', 'Bruno, male Maltipoo puppy (photo 3)', 0, 3),
+  (81, 22, '/images/puppies/maltipoo-bruno-boy/4.webp', 'Bruno, male Maltipoo puppy (photo 4)', 0, 4),
+  (82, 23, '/images/puppies/maltese-buddy-male/1.webp', 'Buddy, male Maltese puppy', 0, 1),
+  (83, 24, '/images/puppies/maltese-charlie-male/1.webp', 'Charlie, male Maltese puppy', 0, 1),
+  (84, 25, '/images/puppies/pomeranian-daisy-girl/1.webp', 'Daisy, female Pomeranian puppy', 0, 1),
+  (85, 26, '/images/puppies/pomeranian-bella-female/1.webp', 'Bella, female Pomeranian puppy', 0, 1),
+  (86, 27, '/images/puppies/poodle-teddy-male/1.webp', 'Teddy, male Poodle puppy', 0, 1),
+  (87, 28, '/images/puppies/poodle-molly-female/1.webp', 'Molly, female Poodle puppy', 0, 1),
+  (88, 29, '/images/puppies/pomski-coco-girl/1.webp', 'Coco, female Pomsky puppy', 0, 1),
+  (89, 29, '/images/puppies/pomski-coco-girl/2.webp', 'Coco, female Pomsky puppy (photo 2)', 0, 2),
+  (90, 29, '/images/puppies/pomski-coco-girl/3.webp', 'Coco, female Pomsky puppy (photo 3)', 0, 3),
+  (91, 30, '/images/puppies/pomsky-rosie-girl/1.webp', 'Rosie, female Pomsky puppy', 0, 1),
+  (92, 30, '/images/puppies/pomsky-rosie-girl/2.webp', 'Rosie, female Pomsky puppy (photo 2)', 0, 2),
+  (93, 30, '/images/puppies/pomsky-rosie-girl/3.webp', 'Rosie, female Pomsky puppy (photo 3)', 0, 3),
+  (94, 30, '/images/puppies/pomsky-rosie-girl/4.webp', 'Rosie, female Pomsky puppy (photo 4)', 0, 4),
+  (95, 31, '/images/puppies/pomeranian-leo-boy/1.webp', 'Leo, male Pomeranian puppy', 0, 1),
+  (96, 31, '/images/puppies/pomeranian-leo-boy/2.webp', 'Leo, male Pomeranian puppy (photo 2)', 0, 2),
+  (97, 31, '/images/puppies/pomeranian-leo-boy/3.webp', 'Leo, male Pomeranian puppy (photo 3)', 0, 3),
+  (98, 31, '/images/puppies/pomeranian-leo-boy/4.webp', 'Leo, male Pomeranian puppy (photo 4)', 0, 4),
+  (99, 31, '/images/puppies/pomeranian-leo-boy/5.webp', 'Leo, male Pomeranian puppy (photo 5)', 0, 5),
+  (100, 32, '/images/puppies/poodle-molly-girl/1.webp', 'Molly, female Poodle puppy', 0, 1),
+  (101, 32, '/images/puppies/poodle-molly-girl/2.webp', 'Molly, female Poodle puppy (photo 2)', 0, 2),
+  (102, 32, '/images/puppies/poodle-molly-girl/3.webp', 'Molly, female Poodle puppy (photo 3)', 0, 3),
+  (103, 33, '/images/puppies/poodle-rocky-boy/1.webp', 'Rocky, male Poodle puppy', 0, 1),
+  (104, 33, '/images/puppies/poodle-rocky-boy/2.webp', 'Rocky, male Poodle puppy (photo 2)', 0, 2),
+  (105, 33, '/images/puppies/poodle-rocky-boy/3.webp', 'Rocky, male Poodle puppy (photo 3)', 0, 3),
+  (106, 34, '/images/puppies/maltipoo-sophie-girl/1.webp', 'Sophie, female Maltipoo puppy', 0, 1),
+  (107, 34, '/images/puppies/maltipoo-sophie-girl/2.webp', 'Sophie, female Maltipoo puppy (photo 2)', 0, 2),
+  (108, 34, '/images/puppies/maltipoo-sophie-girl/3.webp', 'Sophie, female Maltipoo puppy (photo 3)', 0, 3),
+  (109, 35, '/images/puppies/maltipoo-lola-girl/1.webp', 'Lola, female Maltipoo puppy', 0, 1),
+  (110, 35, '/images/puppies/maltipoo-lola-girl/2.webp', 'Lola, female Maltipoo puppy (photo 2)', 0, 2),
+  (111, 35, '/images/puppies/maltipoo-lola-girl/3.webp', 'Lola, female Maltipoo puppy (photo 3)', 0, 3),
+  (112, 35, '/images/puppies/maltipoo-lola-girl/4.webp', 'Lola, female Maltipoo puppy (photo 4)', 0, 4),
+  (113, 36, '/images/puppies/pomeranian-rex-boy/1.webp', 'Rex, male Pomeranian puppy', 0, 1),
+  (114, 36, '/images/puppies/pomeranian-rex-boy/2.webp', 'Rex, male Pomeranian puppy (photo 2)', 0, 2),
+  (115, 36, '/images/puppies/pomeranian-rex-boy/3.webp', 'Rex, male Pomeranian puppy (photo 3)', 0, 3),
+  (116, 37, '/images/puppies/pomsky-finn-male/1.webp', 'Finn, male Pomsky puppy', 0, 1),
+  (117, 38, '/images/puppies/maltipoo-zoe-girl/1.webp', 'Zoe, female Maltipoo puppy', 0, 1),
+  (118, 38, '/images/puppies/maltipoo-zoe-girl/2.webp', 'Zoe, female Maltipoo puppy (photo 2)', 0, 2),
+  (119, 38, '/images/puppies/maltipoo-zoe-girl/3.webp', 'Zoe, female Maltipoo puppy (photo 3)', 0, 3),
+  (120, 38, '/images/puppies/maltipoo-zoe-girl/4.webp', 'Zoe, female Maltipoo puppy (photo 4)', 0, 4),
+  (121, 38, '/images/puppies/maltipoo-zoe-girl/5.webp', 'Zoe, female Maltipoo puppy (photo 5)', 0, 5),
+  (122, 39, '/images/puppies/pomeranian-mimi-girl/1.webp', 'Mimi, female Pomeranian puppy', 0, 1),
+  (123, 39, '/images/puppies/pomeranian-mimi-girl/2.webp', 'Mimi, female Pomeranian puppy (photo 2)', 0, 2),
+  (124, 39, '/images/puppies/pomeranian-mimi-girl/3.webp', 'Mimi, female Pomeranian puppy (photo 3)', 0, 3),
+  (125, 39, '/images/puppies/pomeranian-mimi-girl/4.webp', 'Mimi, female Pomeranian puppy (photo 4)', 0, 4),
+  (126, 39, '/images/puppies/pomeranian-mimi-girl/5.webp', 'Mimi, female Pomeranian puppy (photo 5)', 0, 5),
+  (127, 39, '/images/puppies/pomeranian-mimi-girl/6.webp', 'Mimi, female Pomeranian puppy (photo 6)', 0, 6),
+  (128, 40, '/images/puppies/bichon-bailey-boy/1.webp', 'Bailey, male Bichon puppy', 0, 1),
+  (129, 40, '/images/puppies/pomeranian-mimi-girl/2.webp', 'Bailey, male Bichon puppy (photo 2)', 0, 2),
+  (130, 40, '/images/puppies/bichon-bailey-boy/3.webp', 'Bailey, male Bichon puppy (photo 3)', 0, 3),
+  (131, 41, '/images/puppies/puppy/1.webp', 'Female Maltipoo puppy', 0, 1),
+  (132, 42, '/images/puppies/maltipo/1.webp', 'Female Poodle puppy', 0, 1);
+
+-- FAQ
+INSERT INTO faqs (question, answer, show_on_home, is_active, sort_order) VALUES
+  ('Are your puppies vaccinated and health-checked?', 'Yes. All our puppies come with a verified health certificate from licensed vets. Every puppy is vaccinated, dewormed, and thoroughly checked before joining your family.', 1, 1, 1),
+  ('Can I meet a puppy before I decide?', 'Yes. Come meet our locally available puppies in our Downtown Dubai showroom and spend time bonding before making your decision.', 1, 1, 2),
+  ('Can I take my puppy home the same day?', 'Local puppies are available immediately, so you can take your puppy home the same day.', 1, 1, 3),
+  ('Do you import puppies from abroad?', 'Yes. Through our Order Upon Request service we source rare and premium teacup breeds from the most reputable, certified breeders across Europe, Korea, and beyond — and we handle the import for you.', 0, 1, 4),
+  ('How does an imported puppy travel to Dubai?', 'We manage every part of the import process, including health checks, travel arrangements, and the necessary documentation, so your puppy arrives happy, healthy, and stress-free.', 0, 1, 5),
+  ('Will I see photos and health details first?', 'Yes. Photos, videos, and health certificates are shared before your puppy travels, and our team sends real photos and health details directly on WhatsApp.', 0, 1, 6),
+  ('Do you deliver?', 'Yes. We deliver within Dubai, and our trusted international cargo partners deliver puppies safely to loving homes all around the world.', 0, 1, 7),
+  ('Which breeds do you usually have?', 'Breeds we regularly have include Maltipoo, Pomeranian, Poodle and Bichon, plus rare teacup lines such as Korean teacup poodles, Maltese, Pom and Yorkie.', 0, 1, 8),
+  ('Is there help after my puppy comes home?', 'Yes. Our team is available 24/7 and offers advice on training, nutrition, and general care to ensure a smooth transition for you and your new furry friend.', 0, 1, 9);
+
+-- testimonials
+INSERT INTO testimonials (author_name, author_location, puppy_breed, quote, is_featured, sort_order) VALUES
+  ('Sarah M.', 'Dubai, UAE', 'Maltipoo', 'TeddyPups truly made our dream a reality. They supported us at every step of the import journey. Our Maltipoo arrived healthy, cheerful, and absolutely perfect. Having 24/7 support throughout the process gave us complete peace of mind.', 1, 1);
+
+-- happy families gallery (the first 8 have captions and are also used on the home page)
+INSERT INTO family_photos (image_url, caption, alt, sort_order) VALUES
+  ('/images/happy/01.webp', 'Lulu 🧸 with her new mummy ❤️', 'A happy TeddyPups family with their new puppy', 1),
+  ('/images/happy/02.webp', 'Adorable Maltipoo baby 🧸❤️', 'A happy TeddyPups family with their new puppy', 2),
+  ('/images/happy/03.webp', 'My new teddy puppy 🥰🧸', 'A happy TeddyPups family with their new puppy', 3),
+  ('/images/happy/04.webp', 'Our new puppies 🧸🥰🤗', 'A happy TeddyPups family with their new puppy', 4),
+  ('/images/happy/05.webp', 'New puppy 🧸😍', 'A happy TeddyPups family with their new puppy', 5),
+  ('/images/happy/06.webp', 'Gang of 3 😍🧸', 'A happy TeddyPups family with their new puppy', 6),
+  ('/images/happy/07.webp', 'So happy 😍😍', 'A happy TeddyPups family with their new puppy', 7),
+  ('/images/happy/08.webp', 'New pup 🤗💫', 'A happy TeddyPups family with their new puppy', 8),
+  ('/images/happy/09.webp', NULL, 'A happy TeddyPups family with their new puppy', 9),
+  ('/images/happy/10.webp', NULL, 'A happy TeddyPups family with their new puppy', 10),
+  ('/images/happy/11.webp', NULL, 'A happy TeddyPups family with their new puppy', 11),
+  ('/images/happy/12.webp', NULL, 'A happy TeddyPups family with their new puppy', 12),
+  ('/images/happy/13.webp', NULL, 'A happy TeddyPups family with their new puppy', 13),
+  ('/images/happy/14.webp', NULL, 'A happy TeddyPups family with their new puppy', 14),
+  ('/images/happy/15.webp', NULL, 'A happy TeddyPups family with their new puppy', 15),
+  ('/images/happy/16.webp', NULL, 'A happy TeddyPups family with their new puppy', 16),
+  ('/images/happy/17.webp', NULL, 'A happy TeddyPups family with their new puppy', 17),
+  ('/images/happy/18.webp', NULL, 'A happy TeddyPups family with their new puppy', 18),
+  ('/images/happy/19.webp', NULL, 'A happy TeddyPups family with their new puppy', 19),
+  ('/images/happy/20.webp', NULL, 'A happy TeddyPups family with their new puppy', 20),
+  ('/images/happy/21.webp', NULL, 'A happy TeddyPups family with their new puppy', 21),
+  ('/images/happy/22.webp', NULL, 'A happy TeddyPups family with their new puppy', 22),
+  ('/images/happy/23.webp', NULL, 'A happy TeddyPups family with their new puppy', 23),
+  ('/images/happy/24.webp', NULL, 'A happy TeddyPups family with their new puppy', 24),
+  ('/images/happy/25.webp', NULL, 'A happy TeddyPups family with their new puppy', 25),
+  ('/images/happy/26.webp', NULL, 'A happy TeddyPups family with their new puppy', 26),
+  ('/images/happy/27.webp', NULL, 'A happy TeddyPups family with their new puppy', 27),
+  ('/images/happy/28.webp', NULL, 'A happy TeddyPups family with their new puppy', 28),
+  ('/images/happy/29.webp', NULL, 'A happy TeddyPups family with their new puppy', 29),
+  ('/images/happy/30.webp', NULL, 'A happy TeddyPups family with their new puppy', 30),
+  ('/images/happy/31.webp', NULL, 'A happy TeddyPups family with their new puppy', 31),
+  ('/images/happy/32.webp', NULL, 'A happy TeddyPups family with their new puppy', 32),
+  ('/images/happy/33.webp', NULL, 'A happy TeddyPups family with their new puppy', 33),
+  ('/images/happy/34.webp', NULL, 'A happy TeddyPups family with their new puppy', 34),
+  ('/images/happy/35.webp', NULL, 'A happy TeddyPups family with their new puppy', 35),
+  ('/images/happy/36.webp', NULL, 'A happy TeddyPups family with their new puppy', 36),
+  ('/images/happy/37.webp', NULL, 'A happy TeddyPups family with their new puppy', 37),
+  ('/images/happy/38.webp', NULL, 'A happy TeddyPups family with their new puppy', 38),
+  ('/images/happy/39.webp', NULL, 'A happy TeddyPups family with their new puppy', 39),
+  ('/images/happy/40.webp', NULL, 'A happy TeddyPups family with their new puppy', 40),
+  ('/images/happy/41.webp', NULL, 'A happy TeddyPups family with their new puppy', 41),
+  ('/images/happy/42.webp', NULL, 'A happy TeddyPups family with their new puppy', 42),
+  ('/images/happy/43.webp', NULL, 'A happy TeddyPups family with their new puppy', 43),
+  ('/images/happy/44.webp', NULL, 'A happy TeddyPups family with their new puppy', 44),
+  ('/images/happy/45.webp', NULL, 'A happy TeddyPups family with their new puppy', 45),
+  ('/images/happy/46.webp', NULL, 'A happy TeddyPups family with their new puppy', 46),
+  ('/images/happy/47.webp', NULL, 'A happy TeddyPups family with their new puppy', 47),
+  ('/images/happy/48.webp', NULL, 'A happy TeddyPups family with their new puppy', 48),
+  ('/images/happy/49.webp', NULL, 'A happy TeddyPups family with their new puppy', 49),
+  ('/images/happy/50.webp', NULL, 'A happy TeddyPups family with their new puppy', 50),
+  ('/images/happy/51.webp', NULL, 'A happy TeddyPups family with their new puppy', 51),
+  ('/images/happy/52.webp', NULL, 'A happy TeddyPups family with their new puppy', 52),
+  ('/images/happy/53.webp', NULL, 'A happy TeddyPups family with their new puppy', 53),
+  ('/images/happy/54.webp', NULL, 'A happy TeddyPups family with their new puppy', 54),
+  ('/images/happy/55.webp', NULL, 'A happy TeddyPups family with their new puppy', 55),
+  ('/images/happy/56.webp', NULL, 'A happy TeddyPups family with their new puppy', 56),
+  ('/images/happy/57.webp', NULL, 'A happy TeddyPups family with their new puppy', 57),
+  ('/images/happy/58.webp', NULL, 'A happy TeddyPups family with their new puppy', 58),
+  ('/images/happy/59.webp', NULL, 'A happy TeddyPups family with their new puppy', 59),
+  ('/images/happy/60.webp', NULL, 'A happy TeddyPups family with their new puppy', 60),
+  ('/images/happy/61.webp', NULL, 'A happy TeddyPups family with their new puppy', 61),
+  ('/images/happy/62.webp', NULL, 'A happy TeddyPups family with their new puppy', 62),
+  ('/images/happy/63.webp', NULL, 'A happy TeddyPups family with their new puppy', 63),
+  ('/images/happy/64.webp', NULL, 'A happy TeddyPups family with their new puppy', 64);
+
+-- puppy journey steps (home page)
+INSERT INTO journey_steps (step_no, title, description) VALUES
+  (1, 'Choose your breed', 'Select your preferred breed or tell us what you''re looking for. We''ll guide you based on availability and your lifestyle.'),
+  (2, 'Get photos & details', 'Our team will share real photos, health details, and all necessary information directly on WhatsApp.'),
+  (3, 'Secure & safe delivery', 'Once confirmed, we handle everything professionally and ensure your puppy reaches you safely and stress-free.');
+
+-- "why families trust TeddyPups" (puppy passport)
+INSERT INTO trust_points (title, description, icon_key, sort_order) VALUES
+  ('Vet-checked & healthy', 'Every puppy comes vaccinated, dewormed, and with a verified health certificate.', 'heart-pulse', 1),
+  ('Korea to Dubai, safely', 'Trusted breeders, safe travel, and premium care from start to finish.', 'plane', 2),
+  ('Support 24/7', 'Always here to help, from choosing your puppy to post-delivery support.', 'chat', 3),
+  ('Trusted by families worldwide', 'Puppies delivered to loving homes all around the world.', 'globe', 4);
+
+-- site settings (contact details are those printed on the reference site)
+INSERT INTO site_settings (setting_key, setting_value) VALUES
+  ('brand_name', 'TeddyPups U.A.E.'),
+  ('tagline', 'every puppy is family'),
+  ('whatsapp_number', '971541676733'),
+  ('whatsapp_greeting', 'Hi TeddyPups! I''d love to know more about your puppies.'),
+  ('phone_display', '+971 54 167 6733'),
+  ('phone_tel', '+971541676733'),
+  ('email', 'teddypupsadmin@gmail.com'),
+  ('address', 'Downtown Dubai, United Arab Emirates'),
+  ('maps_url', 'https://maps.app.goo.gl/ZdJvwHBSQWWZT54s7'),
+  ('instagram_url', 'https://www.instagram.com/teddypups.worldwide/'),
+  ('tiktok_url', 'https://www.tiktok.com/@teddypupsuae'),
+  ('facebook_url', 'https://www.facebook.com/profile.php?id=61567496944539');
