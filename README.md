@@ -220,11 +220,12 @@ Invalid form input answers `422` with a message per field. A hidden `website` fi
 
 The frontend is deployed on Vercel and the Express API on Render:
 
-- `vercel.json` proxies same-origin `/api/...` requests to `https://puppy-instabiz.onrender.com/api/...`.
+- Set Vercel's **Root Directory** to `client`. `client/vercel.json` proxies same-origin `/api/...` requests to `https://puppy-instabiz.onrender.com/api/...`. The root `vercel.json` supports deployments configured with the repository root instead.
 - During local development, Vite proxies `/api/...` to the Render API by default, so the backend does not need to be running on your computer. Set `VITE_PROXY_TARGET=http://localhost:5000` if you want to run the backend locally.
 - Both proxies keep API requests on the frontend origin from the browser's perspective. The API does not need CORS middleware, so it has been removed.
 - Configure the MySQL connection variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`) in Render. Do not put database credentials in Vercel or in client-side variables.
-- Redeploy both Vercel and Render after deploying these changes.
+- Do not set `VITE_API_URL` in Vercel; the frontend should request `/api/...` on its own domain and let the Vercel rewrite forward it to Render.
+- Redeploy Vercel after these changes. The production Render backend must use the intended MySQL credentials; the Vercel project does not connect to MySQL directly.
 
 ## Testing
 
