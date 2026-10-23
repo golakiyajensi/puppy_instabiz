@@ -40,7 +40,7 @@ All the content the pages show (puppies, photos, FAQ, testimonials, "how it work
 | Backend | Node.js with Express 5 |
 | Database | MySQL (mysql2 driver) |
 | Validation | express-validator (server) and matching rules in the React forms |
-| Security | helmet, cors, express-rate-limit, parameterised SQL queries |
+| Security | helmet, express-rate-limit, parameterised SQL queries |
 | Version control | Git and GitHub |
 
 ## Project Structure
@@ -162,13 +162,12 @@ Add these to `server/.env` (never commit real secrets):
 | `DB_USER` | MySQL username |
 | `DB_PASSWORD` | MySQL password |
 | `DB_NAME` | Database name (puppy_clone) |
-| `CLIENT_URL` | Frontend URL(s), for CORS (comma separated when there are several; defaults to localhost and the deployed Vercel site) |
 
 Add this to `client/.env`:
 
 | Variable | Description |
 | --- | --- |
-| `VITE_API_URL` | Backend API URL. Leave empty to use the local Vite proxy in development and the Render API in production |
+| `VITE_PROXY_TARGET` | Backend URL used by the local Vite proxy. Defaults to Render; set to `http://localhost:5000` to use a local API |
 
 ### Build for production
 
@@ -221,10 +220,11 @@ Invalid form input answers `422` with a message per field. A hidden `website` fi
 
 The frontend is deployed on Vercel and the Express API on Render:
 
-- The production frontend defaults to `https://puppy-instabiz.onrender.com/api`; set `VITE_API_URL` in Vercel only if the API address changes. The client adds `/api` automatically if you enter only the Render service URL.
-- The Render API allows `https://puppyinstabiz.vercel.app` and `http://localhost:5173` by default. Set `CLIENT_URL` in Render to allow additional comma-separated origins, such as a custom frontend domain.
+- `vercel.json` proxies same-origin `/api/...` requests to `https://puppy-instabiz.onrender.com/api/...`.
+- During local development, Vite proxies `/api/...` to the Render API by default, so the backend does not need to be running on your computer. Set `VITE_PROXY_TARGET=http://localhost:5000` if you want to run the backend locally.
+- Both proxies keep API requests on the frontend origin from the browser's perspective. The API does not need CORS middleware, so it has been removed.
 - Configure the MySQL connection variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`) in Render. Do not put database credentials in Vercel or in client-side variables.
-- Redeploy the Vercel frontend after changing its environment variables.
+- Redeploy both Vercel and Render after deploying these changes.
 
 ## Testing
 
