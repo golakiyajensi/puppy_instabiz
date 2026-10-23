@@ -162,13 +162,13 @@ Add these to `server/.env` (never commit real secrets):
 | `DB_USER` | MySQL username |
 | `DB_PASSWORD` | MySQL password |
 | `DB_NAME` | Database name (puppy_clone) |
-| `CLIENT_URL` | Frontend URL, for CORS (comma separated when there are several) |
+| `CLIENT_URL` | Frontend URL(s), for CORS (comma separated when there are several; defaults to localhost and the deployed Vercel site) |
 
 Add this to `client/.env`:
 
 | Variable | Description |
 | --- | --- |
-| `VITE_API_URL` | Backend API URL. Leave empty to use `/api` (proxied by Vite while developing) |
+| `VITE_API_URL` | Backend API URL. Leave empty to use the local Vite proxy in development and the Render API in production |
 
 ### Build for production
 
@@ -219,7 +219,12 @@ Invalid form input answers `422` with a message per field. A hidden `website` fi
 
 ## Deployment
 
-Deployment details will be added after the project is deployed.
+The frontend is deployed on Vercel and the Express API on Render:
+
+- The production frontend defaults to `https://puppy-instabiz.onrender.com/api`; set `VITE_API_URL` in Vercel only if the API address changes. The client adds `/api` automatically if you enter only the Render service URL.
+- The Render API allows `https://puppyinstabiz.vercel.app` and `http://localhost:5173` by default. Set `CLIENT_URL` in Render to allow additional comma-separated origins, such as a custom frontend domain.
+- Configure the MySQL connection variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`) in Render. Do not put database credentials in Vercel or in client-side variables.
+- Redeploy the Vercel frontend after changing its environment variables.
 
 ## Testing
 

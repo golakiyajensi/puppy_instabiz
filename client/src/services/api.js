@@ -1,6 +1,5 @@
-// All calls to the Express API live here. The base address comes from VITE_API_URL (see .env.example);
-// by default it is "/api", which Vite forwards to http://localhost:5000 while developing.
-const BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+// Keep requests same-origin; Vite and Vercel proxy /api to the Express server.
+const BASE = '/api'
 
 async function request(path, options = {}) {
   let res

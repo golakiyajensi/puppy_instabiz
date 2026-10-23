@@ -5,7 +5,7 @@ import { checkConnection, explainDbError, dbConfig } from './config/db.js'
 const PORT = Number(process.env.PORT) || 5000
 const app = createApp()
 
-app.listen(PORT, async () => {
+app.listen(PORT, "0.0.0.0", async () => {
   console.log(`API running on http://localhost:${PORT}/api  (try /api/health)`)
 
   const db = await checkConnection()

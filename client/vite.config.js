@@ -2,8 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// In development the React app calls "/api/..." and Vite forwards it to the Express server,
-// so no CORS set-up is needed. Change the target if your API runs on another port.
+// Proxy API calls during development so the browser stays on the Vite origin.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
